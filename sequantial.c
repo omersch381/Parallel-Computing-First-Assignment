@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include "mpi.h"
 
 #define HEAVY 100000
 #define SHORT 1
@@ -28,10 +29,18 @@ int main(int argc, char *argv[]) {
        	int N = 20;
       	double answer = 0;
 
+		MPI_Init(&argc,&argv); // I added it because of the MPI_Wtime function
+		double start = MPI_Wtime();
+
 		for (x = 0; x < N; x++)
 			for (y = 0; y < N; y++) 
 				answer += heavy(x, y);
+		double end = MPI_Wtime();
+		double time = end - start;
+       	printf("answer = %e\n", answer);
+	   	printf("time it took:  %lf\n", time);
 
-       printf("answer = %e\n", answer);
+		MPI_Finalize();
+	   
 }
 

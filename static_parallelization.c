@@ -6,10 +6,6 @@
 #define SHORT 1
 #define LONG 10
 
-//////////////////////////////////////?///////////////////?///////////////////?///////////////////
-TODO: change the type of result and tempResult, also in mpiReceive and mpiSend
-///////////////////?///////////////////?///////////////////?///////////////////?///////////////////?
-
 
 // This function performs heavy computations, 
 // its run time depends on x and y values
@@ -29,10 +25,9 @@ TODO: change the type of result and tempResult, also in mpiReceive and mpiSend
  
 
 int main(int argc, char *argv[]) {
-       	int myid, numprocs
-		int result = 0, tempResult = 0; // Master will recieve a temp from each process and sum all results in result
+       	int myid, numprocs;
+		double result = -1, tempResult = -1; // -1 because I want to make sure that it works
 		int tag = 0;
-		int x, y;
        	int N = 20;
       	double answer = 0;
 
@@ -42,25 +37,36 @@ int main(int argc, char *argv[]) {
 		MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 		MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
+		
 		if (myid == 0){
+			double start = MPI_Wtime();
 			int i;
+			result = 0;
+			tempResult = 0; // I could have avoided using mpi_send from master to slaves but parallelization time includes also the sending time.
+			for (i = 0; i < numprocs - 1; i++)
+				MPI_Send(&tempResult, 1, MPI_DOUBLE, i + 1, tag, MPI_COMM_WORLD);
 			for (i = 0; i < numprocs - 1; i++)
 			{
-				MPI_Recv(tempResult, 1, MPI_INT, i + 1, tag, MPI_COMM_WORLD, &status);
+				MPI_Recv(&tempResult, 1, MPI_DOUBLE, i + 1, tag, MPI_COMM_WORLD, &status);
 				result += tempResult;
-				printf("answer = %e\n", answer);
 			}
+			double end = MPI_Wtime();
+			printf("Final answer is  = %lf\n", result);
+			double time = end - start;
+			printf("time it took:  %lf\n", time);
 		}
 		else{
+			MPI_Recv(&tempResult, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
 			int amountOfJob = N / (numprocs - 1);
 			int initial = (myid - 1) * amountOfJob; 
 			int final = initial + amountOfJob - 1;
+			int x, y;
 			for (x = initial; x < final; x++)
 				for (y = 0; y < N; y++){
 					answer += heavy(x, y);
 					tempResult += answer;
 				}
-			MPI_Send(tempResult, 1, MPI_INT, 0, tag, MPI_COMM_WORLD);
+			MPI_Send(&tempResult, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
 		}
 		
 	   MPI_Finalize();
