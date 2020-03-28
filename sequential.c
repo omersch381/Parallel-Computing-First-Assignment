@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 				answer += heavy(x, y);
 		double end = MPI_Wtime();
 		double time = end - start;
-       	printf("answer = %e\n", answer);
+       		printf("answer = %e\n", answer);
 	   	printf("time it took:  %lf\n", time);
 
 		MPI_Finalize();
